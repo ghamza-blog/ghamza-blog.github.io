@@ -13,6 +13,8 @@ paginate = 10
 mode = "auto"
 useCDN = true
 subtitle = "Personal blog to share computer science and software engineering articles."
+gtag_key = "G-M9GYS9Z1XC"
+support_text = "🕊️🇵🇸 I stand with humanity, I stand with Palestine 🇵🇸🕊️"
 
 [[params.social]]
 name = "GitHub"
