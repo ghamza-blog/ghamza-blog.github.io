@@ -1,6 +1,6 @@
-baseURL = "https://ghamza-blog.github.io"
+baseURL = "https://blog.ghamza.dev"
 languageCode = "en-us"
-title = "Blog.Ghamza"
+title = "Ghamza Blog"
 theme = "ghamza-archie"
 copyright = "© Hamza Jadid"
 
