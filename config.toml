@@ -1,4 +1,4 @@
-baseURL = "https://blog.ghamza.dev"
+baseURL = "https://ghamza-blog.github.io"
 languageCode = "en-us"
 title = "Blog.Ghamza"
 theme = "ghamza-archie"
