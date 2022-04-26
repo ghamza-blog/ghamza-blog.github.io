@@ -1,6 +1,6 @@
 ---
 title: "Number Bases"
-date: 2022-01-03T14:26:43+03:00
+date: 2022-01-03T01:00:00+03:00
 draft: false
 tags: ["Easy CS"]
 description: "Let us look at our number systems and see what number bases mean."

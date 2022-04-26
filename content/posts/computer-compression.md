@@ -1,6 +1,6 @@
 ---
 title: "Computer Compression"
-date: 2021-04-04T13:00:00+03:00
+date: 2021-08-04T01:00:00+03:00
 draft: false
 tags: ["Easy CS"]
 description: "The science behind decreasing file sizes."
@@ -12,7 +12,7 @@ However, compression has its disadvantages as well, when something is compressed
 
 There are many levels of compression, you can compress a file too hard to make it small in size or you can lightly compress a file but its size will just decrease in accordance. Going back to the first example, we can fold a paper 4 times and it will surely become smaller than folding it 1 or 2 times, but here's where things get tricky, there's a limit to how much we can fold a paper, the same case applies when compressing a computer file.
 
-But why should we compress a file lightly? why not always compress it hardly? Well, the more you compress, the harder/longer it takes to decompress that file, a 5-times folded paper will consume more time in the unfolding process than a 1-time folded paper.
+But why should we compress a file lightly? why not always compress it highly? Well, the more you compress, the harder/longer it takes to decompress that file, a 5-times folded paper will consume more time in the unfolding process than a 1-time folded paper.
 
 Compression comes in different algorithms or methods, each one of those methods is used for a certain case. Back to the paper's example, we can fold a paper or scrabble it. Folding is used to keep information and maintain the geometry of the paper. On the other hand, scrabbling is used in case we want to play with the paper, or simply throw it in the trash.
 

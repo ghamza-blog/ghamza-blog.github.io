@@ -1,6 +1,6 @@
 ---
 title: "Computer Memory"
-date: 2021-09-12T14:22:04+03:00
+date: 2021-09-12T01:00:00+03:00
 draft: false
 tags: ["Easy CS"]
 description: "An application to a computer is just like a book, in fact, data in memory are distributed in a page-like model."

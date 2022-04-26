@@ -1,6 +1,6 @@
 ---
 title: "Data Structures"
-date: 2022-01-16T14:34:56+03:00
+date: 2022-01-16T01:00:00+03:00
 draft: false
 tags: ["Easy CS"]
 description: "Data Structures look mean, but they're nice when you get to know them!"
