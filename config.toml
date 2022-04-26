@@ -34,7 +34,7 @@ url = "https://www.linkedin.com/in/hamza-jadid/"
 [[params.social]]
 name = "rss"
 icon = "rss"
-url = "https://www.linkedin.com/in/hamza-jadid/"
+url = "https://blog.ghamza.dev/index.xml"
 
 [[menu.main]]
 name = "Archives"
