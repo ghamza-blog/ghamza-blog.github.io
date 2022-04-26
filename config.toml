@@ -37,7 +37,7 @@ icon = "rss"
 url = "https://www.linkedin.com/in/hamza-jadid/"
 
 [[menu.main]]
-name = "All posts"
+name = "Archives"
 url = "/posts"
 weight = 1
 
