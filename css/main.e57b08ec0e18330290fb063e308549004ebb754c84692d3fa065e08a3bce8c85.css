@@ -64,6 +64,9 @@ ul > li::before {
   content: '* ';
   font-weight: bold;
 }
+li > p {
+  display: inline;
+}
 
 /* Images */
 img {
