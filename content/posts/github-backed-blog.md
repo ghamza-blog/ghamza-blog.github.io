@@ -1,7 +1,7 @@
 ---
 title: "Github Backed Blog"
 date: 2022-04-18T22:28:02+03:00
-draft: false
+draft: true
 description: "Build a blog similar to this one with github only!"
 ---
 
