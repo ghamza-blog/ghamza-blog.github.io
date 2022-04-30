@@ -1,6 +1,7 @@
 baseURL = "https://blog.ghamza.dev"
 languageCode = "en-us"
 title = "Ghamza Blog"
+description = "Computer science blog"
 theme = "ghamza-archie"
 copyright = "© Hamza Jadid"
 
