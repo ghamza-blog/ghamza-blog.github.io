@@ -2,7 +2,7 @@
     "baseURL": "https://blog.ghamza.dev",
     "language": "en-us",
     "title": "Ghamza Blog",
-    "theme": "ghamza-archie",
+    "theme": "baseet",
     "copyright": "© Hamza Jadid",
     "pygmentsstyle": "monokai",
     "pygmentscodefences": true,
