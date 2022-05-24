@@ -1,0 +1,76 @@
+{
+    "baseURL": "https://blog.ghamza.dev",
+    "language": "en-us",
+    "title": "Ghamza Blog",
+    "theme": "ghamza-archie",
+    "copyright": "© Hamza Jadid",
+    "pygmentsstyle": "monokai",
+    "pygmentscodefences": true,
+    "pygmentscodefencesguesssyntax": true,
+    "paginate": 10,
+    "params": {
+        "mode": "auto",
+        "useCDN": true,
+        "subtitle": "Personal blog to share computer science and software engineering articles.",
+        "support_text": "🕊️🇵🇸 I stand with humanity, I stand with Palestine 🇵🇸🕊️",
+        "gtag_key": "G-M9GYS9Z1XC",
+        "giscus": {
+            "enabled": true,
+            "data": {
+                "repo": "ghamza-blog/ghamza-blog.github.io",
+                "repo_id": "R_kgDOHMIi9w",
+                "category_id": "DIC_kwDOHMIi984COoB4",
+                "mapping": "url",
+                "reactions_enabled": 1,
+                "emit_metadata": 1,
+                "input_position": "top",
+                "theme": "preferred_color_scheme",
+                "loading": "lazy",
+                "lang": "en"
+            },
+            "crossorigin": "anonymous"
+        },
+        "favicon": {
+            "apple_touch_icon": "https://static.ghamza.dev/icons/apple-touch-icon.png",
+            "s32": "https://static.ghamza.dev/icons/favicon-32x32.png",
+            "s16": "https://static.ghamza.dev/icons/favicon-16x16.png",
+            "manifest": "https://static.ghamza.dev/icons/site.webmanifest"
+        },
+        "social": [
+            {
+                "name": "GitHub",
+                "icon": "github",
+                "url": "https://github.com/Ghamza-Jd"
+            },
+            {
+                "name": "Facebook",
+                "icon": "facebook",
+                "url": "https://www.facebook.com/ghamza.tech"
+            },
+            {
+                "name": "LinkedIn",
+                "icon": "linkedin",
+                "url": "https://www.linkedin.com/in/hamza-jadid"
+            },
+            {
+                "name": "rss",
+                "icon": "rss",
+                "url": "https://blog.ghamza.dev/index.xml"
+            }
+        ]
+    },
+    "menu": {
+        "main": [
+            {
+                "name": "Archives",
+                "url": "/posts",
+                "weight": 1
+            },
+            {
+                "name": "Tags",
+                "url": "/tags",
+                "weight": 2
+            }
+        ]
+    }
+}
