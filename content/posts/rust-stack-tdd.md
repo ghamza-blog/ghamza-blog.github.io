@@ -11,7 +11,7 @@ Test Driven Development is a way of programming where we write our test with the
 
 ## Stacks
 
-Stacks are known as LIFO (last in first out), it's similar to stacking dishes, in which we can only stack new dishes at the top of the previous ones, and we can remove dished only from the top of the stack.
+Stacks are known as LIFO (last in first out), it's similar to stacking dishes, in which we can only add new dishes at the top of the previous ones, and we can remove dishes only from the top of the stack.
 
 ## Implementation
 
@@ -37,7 +37,7 @@ mod tests {
 
 ```
 
-The `#[cfg(test)]` tells the compiler that its a test configuration, so it will only be executed when we run `cargo test`, however if we build the project it will be ignored.
+The `#[cfg(test)]` tells the compiler that its a test configuration, so it will only be compiled when we run `cargo test`, however if we compile for debug or release it will be ignored.
 
 The `#[test]` indicated that it's a test case.
 
