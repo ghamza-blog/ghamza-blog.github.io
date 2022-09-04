@@ -17,9 +17,6 @@ gtag_key = "G-M9GYS9Z1XC"
 
 [params.giscus]
 enabled = true
-crossorigin = "anonymous"
-
-[params.giscus.data]
 repo = "ghamza-blog/ghamza-blog.github.io"
 repo_id = "R_kgDOHMIi9w"
 category_id = "DIC_kwDOHMIi984COoB4"
@@ -30,6 +27,7 @@ input_position = "top"
 theme = "preferred_color_scheme"
 loading = "lazy"
 lang = "en"
+crossorigin = "anonymous"
 
 [params.favicon]
 apple_touch_icon = "https://static.ghamza.dev/icons/apple-touch-icon.png"
