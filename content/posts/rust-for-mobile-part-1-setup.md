@@ -9,6 +9,7 @@ description: "Rust for Mobile Development Part 1: Setup"
 - [Creating Rust Libraries](#creating-rust-libraries)
 - [Makefile](#makefile)
 - [Install Android and iOS Targets](#install-android-and-ios-targets)
+- [Add Minimal Code Inside Core](#add-minimal-code-inside-core)
 
 
 In this series, we'll see how rust works on Android and ios. We will start with setting up the project.
@@ -39,7 +40,6 @@ mkdir src
 ```
 
 `Cargo.toml` will contain our rust workspace members, and inside `Makefile` we will put our commands.
-
 
 3. Add ignore patterns
 
@@ -125,6 +125,20 @@ make android-setup
 make ios-setup
 ```
 
+## Add Minimal Code Inside Core
+
+Inside `src/greeting_core/src/lib.rs` replace the file's content with a simple greeting function
+
+```rust
+pub fn greet(person: &str) -> String {
+    format!("Hello {person}")
+}
+```
+
+---
+
 And you've reached the end of the first part 🦀.
+
+In the next part, we will start gluing rust code with iOS and create a sample app.
 
 You can find the code for this article on GitHub [Ghamza-Jd/rust-for-mobile](https://github.com/Ghamza-Jd/rust-for-mobile/tree/part-1-setup)
