@@ -1,7 +1,7 @@
 ---
 title: "Rust for Mobile Development Part 2: iOS Glue"
-date: 2022-12-10T15:55:57+02:00
-draft: true
+date: 2023-01-11T05:20:15+02:00
+draft: false
 description: "rust-for-mobile-part-2-ios-glue"
 ---
 
