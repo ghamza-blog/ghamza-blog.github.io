@@ -25,6 +25,7 @@ code {
   text-decoration: bold;
   padding: 0.1em 0.2em;
   border-radius: 2%;
+  font-family: 'Fira Code';
 }
 
 pre {
