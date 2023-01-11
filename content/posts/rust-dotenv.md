@@ -2,6 +2,7 @@
 title: "Rust .env"
 date: 2023-01-11T03:09:15+02:00
 draft: false
+tags: ["Rust"]
 description: "Load Environment Variales in Rust"
 ---
 
