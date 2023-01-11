@@ -65,13 +65,13 @@ weight = 2
 [markup]
 [markup.highlight]
 anchorLineNos = false
-codeFences = false
+codeFences = true
 guessSyntax = true
 hl_Lines = ''
 hl_inline = false
 lineAnchors = ''
 lineNoStart = 1
-lineNos = true
+lineNos = false
 lineNumbersInTable = false
 noClasses = true
 noHl = false
