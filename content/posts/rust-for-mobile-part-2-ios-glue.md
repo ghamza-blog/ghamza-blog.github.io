@@ -2,6 +2,7 @@
 title: "Rust for Mobile Development Part 2: iOS Glue"
 date: 2023-01-11T05:20:15+02:00
 draft: false
+tags: ["Rust"]
 description: "Gluing Rust and iOS together!"
 ---
 
