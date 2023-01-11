@@ -141,6 +141,6 @@ And you've reached the end of the first part 🦀.
 
 In the next part, we will start gluing rust code with iOS and create a sample app.
 
-You can find the code for this article on GitHub [Ghamza-Jd/rust-for-mobile][1]
+You can find the code for this article on GitHub [Ghamza-Jd/exa-lib][1]
 
 [1]: https://github.com/Ghamza-Jd/exa-lib/tree/part-1-setup
