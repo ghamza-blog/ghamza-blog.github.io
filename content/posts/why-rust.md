@@ -14,5 +14,3 @@ If you go to the offical [rust-lang](https://www.rust-lang.org/) page you'll fin
 With rust you build a safe and performant software, previously you had to pick one.
 
 ## Safety
-
-
