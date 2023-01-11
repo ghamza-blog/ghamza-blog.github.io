@@ -275,7 +275,7 @@ Navigate to `Exa.xcframework` (under `target/`) and Click open
 
 ### Using XCFramework
 
-We're going to import `Exa` and use `greet_person`, simple enought.
+We're going to import `Exa` and use `greet_person`, simple enough.
 
 ```swift
 import SwiftUI
