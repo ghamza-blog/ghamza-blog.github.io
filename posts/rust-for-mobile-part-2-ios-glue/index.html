@@ -1,166 +1,167 @@
 <!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><title>Rust for Mobile Development Part 2: iOS Glue - Ghamza Blog</title><link rel=apple-touch-icon sizes=180x180 href=https://static.ghamza.dev/icons/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=https://static.ghamza.dev/icons/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=https://static.ghamza.dev/icons/favicon-16x16.png><link rel=manifest href=https://static.ghamza.dev/icons/site.webmanifest><script async src="https://www.googletagmanager.com/gtag/js?id=G-M9GYS9Z1XC"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-M9GYS9Z1XC")</script><meta name=viewport content="width=device-width,initial-scale=1"><meta name=description content="Gluing Rust and iOS together!"><meta property="og:image" content><meta property="og:title" content="Rust for Mobile Development Part 2: iOS Glue"><meta property="og:description" content="Gluing Rust and iOS together!"><meta property="og:type" content="article"><meta property="og:url" content="https://blog.ghamza.dev/posts/rust-for-mobile-part-2-ios-glue/"><meta property="article:section" content="posts"><meta property="article:published_time" content="2023-01-11T05:20:15+02:00"><meta property="article:modified_time" content="2023-01-11T05:20:15+02:00"><meta name=twitter:card content="summary"><meta name=twitter:title content="Rust for Mobile Development Part 2: iOS Glue"><meta name=twitter:description content="Gluing Rust and iOS together!"><script src=https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js></script>
 <link href="https://fonts.googleapis.com/css?family=Fira+Code" rel=stylesheet><link rel=stylesheet type=text/css media=screen href=https://blog.ghamza.dev/css/main.fdba4ef306acb1dca5545b96e6818114a6bc828051e907b6d87e2472065dfe9d.css><link id=darkModeStyle rel=stylesheet type=text/css href=https://blog.ghamza.dev/css/dark.db7906fbf2fc9252afa1ab59e961cdabe0bf1f561485a1217cc2e182dd9e5c96.css></head><body><div class=content><div class=support-ribbon>🕊️🇵🇸 I stand with humanity, I stand with Palestine 🇵🇸🕊️</div><header><div class=main><a href=https://blog.ghamza.dev>Ghamza Blog</a></div><nav><a href=/posts>Archives</a>
-<a href=/tags>Tags</a></nav></header><main><article><div class=title><h1 class=title>Rust for Mobile Development Part 2: iOS Glue</h1><div class=meta>Posted on Jan 11, 2023</div></div><section class=body><ul><li><a href=#library-target>Library Target</a></li><li><a href=#dependencies>Dependencies</a></li><li><a href=#ios-glue-setup>iOS Glue Setup</a><ul><li><a href=#build-file>Build File</a></li><li><a href=#errors>Errors</a></li><li><a href=#prelude>Prelude</a></li><li><a href=#ffi-helpers>FFI Helpers</a></li><li><a href=#glue>Glue</a></li></ul></li><li><a href=#building-the-project>Building the Project</a></li><li><a href=#using-the-library>Using the Library</a><ul><li><a href=#adding-xcframework>Adding XCFramework</a></li><li><a href=#using-xcframework>Using XCFramework</a></li></ul></li></ul><p>Most of our work is going to be on <code>glue/ios</code></p><h2 id=library-target>Library Target</h2><p>Inside <code>glue/ios/Cargo.toml</code> add the library target and make the crate type a static library</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#433e56;-moz-tab-size:4;-o-tab-size:4;tab-size:4;display:grid><code class=language-toml data-lang=toml><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1</span><span>[package]
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2</span><span>name = <span style=color:#1bc5e0>&#34;ios&#34;</span>
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3</span><span>version = <span style=color:#1bc5e0>&#34;0.1.0&#34;</span>
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4</span><span>edition = <span style=color:#1bc5e0>&#34;2021&#34;</span>
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5</span><span>
-</span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">6</span><span>[lib]
-</span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">7</span><span>name = <span style=color:#1bc5e0>&#34;exa&#34;</span>
-</span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">8</span><span>crate-type = [<span style=color:#1bc5e0>&#34;staticlib&#34;</span>]
-</span></span></code></pre></div><h2 id=dependencies>Dependencies</h2><ul><li><code>exa_core</code>; our core library</li><li><code>libc</code>; provides all of the definitions necessary to easily interoperate with C code (or &ldquo;C-like&rdquo; code) on each of the platforms that Rust supports</li><li><code>cbindgen</code> as build dependency; to generate our library header file.</li></ul><p>We want to export our library as C interfaces so that we can use C types and C functions directly from Swift. <a href=https://developer.apple.com/documentation/swift/c-interoperability>C interoperability with Swift</a>.</p><p>Run</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#433e56;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1</span><span><span style=color:#b0bec5># From the project root directory</span>
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2</span><span>cargo add -p ios --path ./exa_core/
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3</span><span>cargo add -p ios libc
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4</span><span>cargo add -p ios --build cbindgen
-</span></span></code></pre></div><h2 id=ios-glue-setup>iOS Glue Setup</h2><h3 id=build-file>Build File</h3><p>Create <code>glue/ios/build.rs</code> and add to our bindings setup</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#433e56;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1</span><span><span style=color:#c2ffdf>extern</span><span style=color:#a8757b> </span><span style=color:#c2ffdf>crate</span><span style=color:#a8757b> </span>cbindgen;<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2</span><span><span style=color:#a8757b></span><span style=color:#c2ffdf>use</span><span style=color:#a8757b> </span>std::env;<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3</span><span><span style=color:#a8757b></span><span style=color:#c2ffdf>use</span><span style=color:#a8757b> </span>cbindgen::Language::C;<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4</span><span><span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5</span><span><span style=color:#a8757b></span><span style=color:#c2ffdf>fn</span> <span style=color:#ceb1ff>main</span>()<span style=color:#a8757b> </span>{<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6</span><span><span style=color:#a8757b>    </span>setup_cbindgen();<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span><span><span style=color:#a8757b></span>}<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span><span><span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span><span><span style=color:#a8757b></span><span style=color:#c2ffdf>fn</span> <span style=color:#ceb1ff>setup_cbindgen</span>()<span style=color:#a8757b> </span>{<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10</span><span><span style=color:#a8757b>    </span><span style=color:#c2ffdf>let</span><span style=color:#a8757b> </span>crate_dir<span style=color:#a8757b> </span><span style=color:#ffb8d1>=</span><span style=color:#a8757b> </span>env::var(<span style=color:#1bc5e0>&#34;CARGO_MANIFEST_DIR&#34;</span>);<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11</span><span><span style=color:#a8757b>    </span><span style=color:#c2ffdf>match</span><span style=color:#a8757b> </span>crate_dir<span style=color:#a8757b> </span>{<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12</span><span><span style=color:#a8757b>        </span>Ok(val)<span style=color:#a8757b> </span><span style=color:#ffb8d1>=&gt;</span><span style=color:#a8757b> </span>{<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13</span><span><span style=color:#a8757b>            </span>cbindgen::Builder::new()<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14</span><span><span style=color:#a8757b>                </span>.with_crate(val)<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15</span><span><span style=color:#a8757b>                </span>.with_language(C)<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16</span><span><span style=color:#a8757b>                </span>.generate()<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17</span><span><span style=color:#a8757b>                </span>.expect(<span style=color:#1bc5e0>&#34;Unable to generate bindings&#34;</span>)<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18</span><span><span style=color:#a8757b>                </span>.write_to_file(<span style=color:#1bc5e0>&#34;include/exa_native.h&#34;</span>);<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">19</span><span><span style=color:#a8757b>        </span>}<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">20</span><span><span style=color:#a8757b>        </span>Err(err)<span style=color:#a8757b> </span><span style=color:#ffb8d1>=&gt;</span><span style=color:#a8757b> </span>{<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">21</span><span><span style=color:#a8757b>            </span>println!(<span style=color:#1bc5e0>&#34;Error: {}&#34;</span>,<span style=color:#a8757b> </span>err);<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">22</span><span><span style=color:#a8757b>        </span>}<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">23</span><span><span style=color:#a8757b>    </span>}<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">24</span><span><span style=color:#a8757b></span>}<span style=color:#a8757b>
-</span></span></span></code></pre></div><p>Whenever we have a non-mangeled (has <code>#[no_mangle]</code> attribute), public, exported C function in our <code>lib.rs</code> or declared as a module there, the fuction signature is going to be added to <code>glue/ios/include/exa_native.h</code> on save.</p><p>Create <code>glue/ios/include/module.modulemap</code> and add the proper info to export the headers</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#433e56;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-v data-lang=v><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1</span><span><span style=color:#ffb8d1>module</span> <span style=color:#ceb1ff>Exa</span> {
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2</span><span>    header <span style=color:#1bc5e0>&#34;exa_native.h&#34;</span>
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3</span><span>    export <span style=color:#ffb8d1>*</span>
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4</span><span>}
-</span></span></code></pre></div><h3 id=errors>Errors</h3><p>Create <code>glue/ios/src/error.rs</code> that will contain our errors enum to be handled later on.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#433e56;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1</span><span><span style=color:#b0bec5>#[derive(Debug)]</span><span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2</span><span><span style=color:#a8757b></span><span style=color:#c2ffdf>pub</span><span style=color:#a8757b> </span><span style=color:#c2ffdf>enum</span> <span style=color:#ceb1ff>Error</span><span style=color:#a8757b> </span>{<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3</span><span><span style=color:#a8757b>    </span>InvalidUtf8,<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4</span><span><span style=color:#a8757b>    </span>InvalidUint,<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5</span><span><span style=color:#a8757b></span>}<span style=color:#a8757b>
-</span></span></span></code></pre></div><h3 id=prelude>Prelude</h3><p>Prelude is going to be imported in most of the files, so we want to make it as minimal as possibile.</p><p>Inside of it we&rsquo;re going to make a shortcut for the <code>Result</code> type.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#433e56;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1</span><span><span style=color:#c2ffdf>pub</span><span style=color:#a8757b> </span><span style=color:#c2ffdf>use</span><span style=color:#a8757b> </span><span style=color:#c2ffdf>crate</span>::error::Error;<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2</span><span><span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3</span><span><span style=color:#a8757b></span><span style=color:#c2ffdf>pub</span><span style=color:#a8757b> </span><span style=color:#c2ffdf>type</span> Result<span style=color:#ffb8d1>&lt;</span>T<span style=color:#ffb8d1>&gt;</span><span style=color:#a8757b> </span><span style=color:#ffb8d1>=</span><span style=color:#a8757b> </span>core::result::Result<span style=color:#ffb8d1>&lt;</span>T,<span style=color:#a8757b> </span>Error<span style=color:#ffb8d1>&gt;</span>;<span style=color:#a8757b>
-</span></span></span></code></pre></div><p>Now we can add both of them to <code>glue/ios/src/lib.rs</code></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#433e56;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1</span><span><span style=color:#c2ffdf>mod</span> error;<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2</span><span><span style=color:#a8757b></span><span style=color:#c2ffdf>mod</span> prelude;<span style=color:#a8757b>
-</span></span></span></code></pre></div><p>This pattern is considered an idiomatic way in rust for handling errors.</p><h3 id=ffi-helpers>FFI Helpers</h3><p>FFI stands for foriegn function interface, we will add helpers for converting to and from C types</p><p>Create <code>glue/ios/src/ffi_helpers.rs</code></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#433e56;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1</span><span><span style=color:#c2ffdf>use</span><span style=color:#a8757b> </span><span style=color:#c2ffdf>crate</span>::prelude::<span style=color:#ffb8d1>*</span>;<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2</span><span><span style=color:#a8757b></span><span style=color:#c2ffdf>use</span><span style=color:#a8757b> </span>libc::c_char;<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3</span><span><span style=color:#a8757b></span><span style=color:#c2ffdf>use</span><span style=color:#a8757b> </span>std::ffi::{CStr,<span style=color:#a8757b> </span>CString};<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4</span><span><span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5</span><span><span style=color:#a8757b></span><span style=color:#c2ffdf>pub</span><span style=color:#a8757b> </span><span style=color:#c2ffdf>unsafe</span><span style=color:#a8757b> </span><span style=color:#c2ffdf>fn</span> <span style=color:#ceb1ff>to_rust_str</span><span style=color:#ffb8d1>&lt;&#39;</span><span style=color:#ceb1ff>a</span><span style=color:#ffb8d1>&gt;</span>(raw_ptr: <span style=color:#ffb8d1>*</span><span style=color:#c2ffdf>const</span><span style=color:#a8757b> </span>c_char)<span style=color:#a8757b> </span>-&gt; Result<span style=color:#ffb8d1>&lt;&amp;&#39;</span><span style=color:#ceb1ff>a</span><span style=color:#a8757b> </span><span style=color:#c2ffdf>str</span><span style=color:#ffb8d1>&gt;</span><span style=color:#a8757b> </span>{<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6</span><span><span style=color:#a8757b>    </span><span style=color:#c2ffdf>match</span><span style=color:#a8757b> </span>CStr::from_ptr(raw_ptr).to_str()<span style=color:#a8757b> </span>{<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span><span><span style=color:#a8757b>        </span>Ok(res)<span style=color:#a8757b> </span><span style=color:#ffb8d1>=&gt;</span><span style=color:#a8757b> </span>Ok(res),<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span><span><span style=color:#a8757b>        </span>Err(_)<span style=color:#a8757b> </span><span style=color:#ffb8d1>=&gt;</span><span style=color:#a8757b> </span>Err(Error::InvalidUtf8),<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span><span><span style=color:#a8757b>    </span>}<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10</span><span><span style=color:#a8757b></span>}<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11</span><span><span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12</span><span><span style=color:#a8757b></span><span style=color:#c2ffdf>pub</span><span style=color:#a8757b> </span><span style=color:#c2ffdf>fn</span> <span style=color:#ceb1ff>to_c_str</span>(s: <span style=color:#c2ffdf>&amp;</span><span style=color:#c2ffdf>str</span>)<span style=color:#a8757b> </span>-&gt; Result<span style=color:#ffb8d1>&lt;*</span><span style=color:#c2ffdf>mut</span><span style=color:#a8757b> </span><span style=color:#c2ffdf>i8</span><span style=color:#ffb8d1>&gt;</span><span style=color:#a8757b> </span>{<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13</span><span><span style=color:#a8757b>    </span><span style=color:#c2ffdf>match</span><span style=color:#a8757b> </span>CString::new(s)<span style=color:#a8757b> </span>{<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14</span><span><span style=color:#a8757b>        </span>Ok(string)<span style=color:#a8757b> </span><span style=color:#ffb8d1>=&gt;</span><span style=color:#a8757b> </span>Ok(string.into_raw()),<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15</span><span><span style=color:#a8757b>        </span>Err(_)<span style=color:#a8757b> </span><span style=color:#ffb8d1>=&gt;</span><span style=color:#a8757b> </span>Err(Error::InvalidUint),<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16</span><span><span style=color:#a8757b>    </span>}<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17</span><span><span style=color:#a8757b></span>}<span style=color:#a8757b>
-</span></span></span></code></pre></div><p>And finally import <code>ffi_helpers.rs</code> inside <code>lib.rs</code></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#433e56;-moz-tab-size:4;-o-tab-size:4;tab-size:4;display:grid><code class=language-rust data-lang=rust><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1</span><span><span style=color:#c2ffdf>mod</span> error;<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2</span><span><span style=color:#a8757b></span><span style=color:#c2ffdf>mod</span> prelude;<span style=color:#a8757b>
-</span></span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3</span><span><span style=color:#a8757b></span><span style=color:#c2ffdf>mod</span> ffi_helpers;<span style=color:#a8757b>
-</span></span></span></code></pre></div><h3 id=glue>Glue</h3><p>For the gluing part, we want to import <code>libc</code> and <code>exa_core</code> and with the help of <code>ffi_helpers</code> we can convert back and forth between C and Rust types.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#433e56;-moz-tab-size:4;-o-tab-size:4;tab-size:4;display:grid><code class=language-rust data-lang=rust><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1</span><span><span style=color:#c2ffdf>mod</span> error;<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2</span><span><span style=color:#a8757b></span><span style=color:#c2ffdf>mod</span> ffi_helpers;<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3</span><span><span style=color:#a8757b></span><span style=color:#c2ffdf>mod</span> prelude;<span style=color:#a8757b>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4</span><span><span style=color:#a8757b>
-</span></span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5</span><span><span style=color:#a8757b></span><span style=color:#c2ffdf>use</span><span style=color:#a8757b> </span>exa_core::greet;<span style=color:#a8757b>
-</span></span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6</span><span><span style=color:#a8757b></span><span style=color:#c2ffdf>use</span><span style=color:#a8757b> </span>libc::c_char;<span style=color:#a8757b>
-</span></span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span><span><span style=color:#a8757b>
-</span></span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span><span><span style=color:#a8757b></span><span style=color:#b0bec5>#[no_mangle]</span><span style=color:#a8757b>
-</span></span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span><span><span style=color:#a8757b></span><span style=color:#c2ffdf>pub</span><span style=color:#a8757b> </span><span style=color:#c2ffdf>unsafe</span><span style=color:#a8757b> </span><span style=color:#c2ffdf>extern</span><span style=color:#a8757b> </span><span style=color:#1bc5e0>&#34;C&#34;</span><span style=color:#a8757b> </span><span style=color:#c2ffdf>fn</span> <span style=color:#ceb1ff>greet_person</span>(name: <span style=color:#ffb8d1>*</span><span style=color:#c2ffdf>const</span><span style=color:#a8757b> </span>c_char)<span style=color:#a8757b> </span>-&gt; <span style=color:#ffb8d1>*</span><span style=color:#c2ffdf>mut</span><span style=color:#a8757b> </span>c_char<span style=color:#a8757b> </span>{<span style=color:#a8757b>
-</span></span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10</span><span><span style=color:#a8757b>    </span><span style=color:#c2ffdf>let</span><span style=color:#a8757b> </span>Ok(name)<span style=color:#a8757b> </span><span style=color:#ffb8d1>=</span><span style=color:#a8757b> </span>ffi_helpers::to_rust_str(name)<span style=color:#a8757b> </span><span style=color:#c2ffdf>else</span><span style=color:#a8757b> </span>{<span style=color:#a8757b>
-</span></span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11</span><span><span style=color:#a8757b>        </span>panic!(<span style=color:#1bc5e0>&#34;Failed to convert to rust string slice&#34;</span>);<span style=color:#a8757b>
-</span></span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12</span><span><span style=color:#a8757b>    </span>};<span style=color:#a8757b>
-</span></span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13</span><span><span style=color:#a8757b>    </span><span style=color:#c2ffdf>let</span><span style=color:#a8757b> </span>name<span style=color:#a8757b> </span><span style=color:#ffb8d1>=</span><span style=color:#a8757b> </span>greet(name);<span style=color:#a8757b>
-</span></span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14</span><span><span style=color:#a8757b>    </span><span style=color:#c2ffdf>let</span><span style=color:#a8757b> </span>Ok(name)<span style=color:#a8757b> </span><span style=color:#ffb8d1>=</span><span style=color:#a8757b> </span>ffi_helpers::to_c_str(<span style=color:#ffb8d1>&amp;</span>name)<span style=color:#a8757b> </span><span style=color:#c2ffdf>else</span><span style=color:#a8757b> </span>{<span style=color:#a8757b>
-</span></span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15</span><span><span style=color:#a8757b>        </span>panic!(<span style=color:#1bc5e0>&#34;Failed to convert to char array&#34;</span>);<span style=color:#a8757b>
-</span></span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16</span><span><span style=color:#a8757b>    </span>};<span style=color:#a8757b>
-</span></span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17</span><span><span style=color:#a8757b>
-</span></span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18</span><span><span style=color:#a8757b>    </span>name<span style=color:#a8757b>
-</span></span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">19</span><span><span style=color:#a8757b></span>}<span style=color:#a8757b>
-</span></span></span></code></pre></div><p>The <code>#[no_mangle]</code> is an important part, so on build the function name is still the same.</p><p>Now if you save, you should be able to see the <code>exa_native.h</code> has added a function.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#433e56;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1</span><span><span style=color:#b0bec5>#include</span> <span style=color:#b0bec5>&lt;stdarg.h&gt;</span><span style=color:#b0bec5>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2</span><span><span style=color:#b0bec5>#include</span> <span style=color:#b0bec5>&lt;stdbool.h&gt;</span><span style=color:#b0bec5>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3</span><span><span style=color:#b0bec5>#include</span> <span style=color:#b0bec5>&lt;stdint.h&gt;</span><span style=color:#b0bec5>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4</span><span><span style=color:#b0bec5>#include</span> <span style=color:#b0bec5>&lt;stdlib.h&gt;</span><span style=color:#b0bec5>
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5</span><span><span style=color:#b0bec5></span>
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">6</span><span><span style=color:#c2ffdf>char</span> <span style=color:#ffb8d1>*</span><span style=color:#ceb1ff>greet_person</span>(<span style=color:#c2ffdf>const</span> <span style=color:#c2ffdf>char</span> <span style=color:#ffb8d1>*</span>name);
-</span></span></code></pre></div><h2 id=building-the-project>Building the Project</h2><p>Add these commands to the <code>Makefile</code></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#433e56;-moz-tab-size:4;-o-tab-size:4;tab-size:4;display:grid><code class=language-make data-lang=make><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1</span><span>ios_targets <span style=color:#ffb8d1>=</span> aarch64-apple-ios x86_64-apple-ios aarch64-apple-ios-sim
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2</span><span>android_targets <span style=color:#ffb8d1>=</span> armv7-linux-androideabi i686-linux-android aarch64-linux-android x86_64-linux-android
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3</span><span>lib_name <span style=color:#ffb8d1>=</span> exa
-</span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4</span><span>framework_name <span style=color:#ffb8d1>=</span> Exa
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5</span><span>
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6</span><span><span style=color:#ceb1ff>android-setup</span><span style=color:#ffb8d1>:</span>
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span><span>	@for target in <span style=color:#1bc5e0>${</span>android_targets<span style=color:#1bc5e0>}</span> ; <span style=color:#c2ffdf>do</span> <span style=color:#1bc5e0>\
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span><span><span style=color:#1bc5e0></span>		rustup target add $$target ; <span style=color:#1bc5e0>\
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span><span><span style=color:#1bc5e0></span>	<span style=color:#c2ffdf>done</span>
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10</span><span>
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11</span><span><span style=color:#ceb1ff>ios-setup</span><span style=color:#ffb8d1>:</span>
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12</span><span>	cargo install cargo-lipo
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13</span><span>
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14</span><span>	@for target in <span style=color:#1bc5e0>${</span>ios_targets<span style=color:#1bc5e0>}</span> ; <span style=color:#c2ffdf>do</span> <span style=color:#1bc5e0>\
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15</span><span><span style=color:#1bc5e0></span>		rustup target add $$target ; <span style=color:#1bc5e0>\
-</span></span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16</span><span><span style=color:#1bc5e0></span>	<span style=color:#c2ffdf>done</span>
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17</span><span>
-</span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18</span><span><span style=color:#ceb1ff>ios</span><span style=color:#ffb8d1>:</span> ios-clean ios-build ios-framework
-</span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">19</span><span>
-</span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">20</span><span><span style=color:#ceb1ff>ios-build</span><span style=color:#ffb8d1>:</span>
-</span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">21</span><span>	@echo <span style=color:#1bc5e0>&#34;Building for iOS...&#34;</span>
-</span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">22</span><span>
-</span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">23</span><span>	@for target in <span style=color:#1bc5e0>${</span>ios_targets<span style=color:#1bc5e0>}</span> ; <span style=color:#c2ffdf>do</span> <span style=color:#1bc5e0>\
-</span></span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">24</span><span><span style=color:#1bc5e0></span>		cargo build -p ios --release --target $$target ; <span style=color:#1bc5e0>\
-</span></span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">25</span><span><span style=color:#1bc5e0></span>	<span style=color:#c2ffdf>done</span>
-</span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">26</span><span>
-</span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">27</span><span>	@lipo -create <span style=color:#1bc5e0>\
-</span></span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">28</span><span><span style=color:#1bc5e0></span>		target/x86_64-apple-ios/release/lib<span style=color:#1bc5e0>${</span>lib_name<span style=color:#1bc5e0>}</span>.a <span style=color:#1bc5e0>\
-</span></span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">29</span><span><span style=color:#1bc5e0></span>		target/aarch64-apple-ios-sim/release/lib<span style=color:#1bc5e0>${</span>lib_name<span style=color:#1bc5e0>}</span>.a <span style=color:#1bc5e0>\
-</span></span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">30</span><span><span style=color:#1bc5e0></span>		-output target/lib<span style=color:#1bc5e0>${</span>lib_name<span style=color:#1bc5e0>}</span>_sim.a
-</span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">31</span><span>
-</span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">32</span><span><span style=color:#ceb1ff>ios-framework</span><span style=color:#ffb8d1>:</span>
-</span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">33</span><span>	@xcodebuild -create-xcframework <span style=color:#1bc5e0>\
-</span></span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">34</span><span><span style=color:#1bc5e0></span>		-library target/lib<span style=color:#1bc5e0>${</span>lib_name<span style=color:#1bc5e0>}</span>_sim.a <span style=color:#1bc5e0>\
-</span></span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">35</span><span><span style=color:#1bc5e0></span>		-headers glue/ios/include/ <span style=color:#1bc5e0>\
-</span></span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">36</span><span><span style=color:#1bc5e0></span>		-library target/aarch64-apple-ios/release/lib<span style=color:#1bc5e0>${</span>lib_name<span style=color:#1bc5e0>}</span>.a <span style=color:#1bc5e0>\
-</span></span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">37</span><span><span style=color:#1bc5e0></span>		-headers glue/ios/include/ <span style=color:#1bc5e0>\
-</span></span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">38</span><span><span style=color:#1bc5e0></span>		-output target/<span style=color:#1bc5e0>${</span>framework_name<span style=color:#1bc5e0>}</span>.xcframework
-</span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">39</span><span>
-</span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">40</span><span><span style=color:#ceb1ff>ios-clean</span><span style=color:#ffb8d1>:</span>
-</span></span><span style=display:flex;background-color:#555166><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">41</span><span>	@cd target <span style=color:#ffb8d1>&amp;&amp;</span> rm -rf <span style=color:#1bc5e0>${</span>framework_name<span style=color:#1bc5e0>}</span>.xcframework
-</span></span></code></pre></div><p><em><strong>Note:</strong> Please make sure to use tabs rather than spaces, if we use spaces Makefile will throw this error: <code>*** missing separator. Stop.</code></em></p><p>And now run <code>make ios</code></p><p><code>ios-build</code> is going to loop over the ios targets that we specified, and build the project targeting them. Then using <code>lipo</code> we&rsquo;re going to create <code>.a</code> files</p><p>And finally we want to bundle the <code>.a</code> files inside an <code>xcframework</code> so we can use it in our ios app.</p><h2 id=using-the-library>Using the Library</h2><h3 id=adding-xcframework>Adding XCFramework</h3><p>Navigate to <code>Frameworks, Libraries, and Embedded Content</code></p><p><img src=https://static.ghamza.dev/images/rust-for-mobile-part-2/navigate_to_framework.png alt=1></p><p>Choose <code>Add Other...</code> > <code>Add Files...</code></p><p><img src=https://static.ghamza.dev/images/rust-for-mobile-part-2/add_other_framework.png alt=2></p><p>Navigate to <code>Exa.xcframework</code> (under <code>target/</code>) and Click open</p><p><img src=https://static.ghamza.dev/images/rust-for-mobile-part-2/choose_framework.png alt=3></p><h3 id=using-xcframework>Using XCFramework</h3><p>We&rsquo;re going to import <code>Exa</code> and use <code>greet_person</code>, simple enough.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#433e56;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-swift data-lang=swift><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1</span><span><span style=color:#c2ffdf>import</span> <span style=color:#ceb1ff>SwiftUI</span>
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2</span><span><span style=color:#c2ffdf>import</span> <span style=color:#ceb1ff>Exa</span>
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3</span><span>
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4</span><span><span style=color:#c2ffdf>struct</span> <span style=color:#ceb1ff>ContentView</span>: View {
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5</span><span>    <span style=color:#c2ffdf>var</span> body: some View {
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6</span><span>        VStack {
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span><span>            Button(action: {
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span><span>                Exa.greet_person(<span style=color:#1bc5e0>&#34;Ghamza&#34;</span>).<span style=color:#80cbc4>map</span> {
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span><span>                    <span style=color:#80cbc4>print</span>(String(cString: $0))
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10</span><span>                }
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11</span><span>            }) {
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12</span><span>                Text(<span style=color:#1bc5e0>&#34;Greet&#34;</span>)
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13</span><span>            }
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14</span><span>        }
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15</span><span>        .padding()
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16</span><span>    }
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17</span><span>}
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18</span><span>
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">19</span><span><span style=color:#c2ffdf>struct</span> <span style=color:#ceb1ff>ContentView_Previews</span>: PreviewProvider {
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">20</span><span>    <span style=color:#c2ffdf>static</span> <span style=color:#c2ffdf>var</span> previews: some View {
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">21</span><span>        ContentView()
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">22</span><span>    }
-</span></span><span style=display:flex><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">23</span><span>}
-</span></span></code></pre></div><p>After using <code>Exa.greet_person</code> we&rsquo;re going to receive a C char pointer, so instead of unsafly unwrapping we use <code>.map</code>, if we have a valid result than we can unwrap it and print it on the console.</p><p>Finally, after pressing <code>Greet</code> you should be able to see the log message in xcode&rsquo;s output console.</p><hr><p>And you&rsquo;ve reached the end of the second part 🦀.</p><p>In the next part, we will continue on gluing rust code but this time with android, create an android module, and a sample app.</p><p>You can find the code for this article on GitHub <a href=https://github.com/Ghamza-Jd/exa-lib/tree/part-2-ios-glue>Ghamza-Jd/exa-lib</a></p></section><div class=post-tags><nav class="nav tags"><ul class=tags><li><a href=/tags/rust>Rust</a></li><li><a href=/tags/rust-for-mobile>Rust for Mobile</a></li></ul></nav></div></article><script src=https://giscus.app/client.js data-repo=ghamza-blog/ghamza-blog.github.io data-repo-id=R_kgDOHMIi9w data-category-id=DIC_kwDOHMIi984COoB4 data-mapping=url data-reactions-enabled=1 data-emit-metadata=1 data-input-position=top data-theme=preferred_color_scheme data-lang=en data-loading=lazy crossorigin=anonymous async></script></main><footer><div style=display:flex><a href=https://github.com/Ghamza-Jd title=GitHub><i data-feather=github></i></a>
+<a href=/tags>Tags</a></nav></header><main><article><div class=title><h1 class=title>Rust for Mobile Development Part 2: iOS Glue</h1><div class=meta>Posted on Jan 11, 2023</div></div><section class=body><ul><li><a href=#library-target>Library Target</a></li><li><a href=#dependencies>Dependencies</a></li><li><a href=#ios-glue-setup>iOS Glue Setup</a><ul><li><a href=#build-file>Build File</a></li><li><a href=#errors>Errors</a></li><li><a href=#prelude>Prelude</a></li><li><a href=#ffi-helpers>FFI Helpers</a></li><li><a href=#glue>Glue</a></li></ul></li><li><a href=#building-the-project>Building the Project</a></li><li><a href=#using-the-library>Using the Library</a><ul><li><a href=#adding-xcframework>Adding XCFramework</a></li><li><a href=#using-xcframework>Using XCFramework</a></li></ul></li></ul><p>Most of our work is going to be on <code>glue/ios</code></p><h2 id=library-target>Library Target</h2><p>Inside <code>glue/ios/Cargo.toml</code> add the library target and make the crate type a static library</p><pre><code class=language-toml>[package]
+name = &quot;ios&quot;
+version = &quot;0.1.0&quot;
+edition = &quot;2021&quot;
+
+[lib]
+name = &quot;exa&quot;
+crate-type = [&quot;staticlib&quot;]
+</code></pre><h2 id=dependencies>Dependencies</h2><ul><li><code>exa_core</code>; our core library</li><li><code>libc</code>; provides all of the definitions necessary to easily interoperate with C code (or &ldquo;C-like&rdquo; code) on each of the platforms that Rust supports</li><li><code>cbindgen</code> as build dependency; to generate our library header file.</li></ul><p>We want to export our library as C interfaces so that we can use C types and C functions directly from Swift. <a href=https://developer.apple.com/documentation/swift/c-interoperability>C interoperability with Swift</a>.</p><p>Run</p><pre><code class=language-shell># From the project root directory
+cargo add -p ios --path ./exa_core/
+cargo add -p ios libc
+cargo add -p ios --build cbindgen
+</code></pre><h2 id=ios-glue-setup>iOS Glue Setup</h2><h3 id=build-file>Build File</h3><p>Create <code>glue/ios/build.rs</code> and add to our bindings setup</p><pre><code class=language-rust>extern crate cbindgen;
+use std::env;
+use cbindgen::Language::C;
+
+fn main() {
+    setup_cbindgen();
+}
+
+fn setup_cbindgen() {
+    let crate_dir = env::var(&quot;CARGO_MANIFEST_DIR&quot;);
+    match crate_dir {
+        Ok(val) =&gt; {
+            cbindgen::Builder::new()
+                .with_crate(val)
+                .with_language(C)
+                .generate()
+                .expect(&quot;Unable to generate bindings&quot;)
+                .write_to_file(&quot;include/exa_native.h&quot;);
+        }
+        Err(err) =&gt; {
+            println!(&quot;Error: {}&quot;, err);
+        }
+    }
+}
+</code></pre><p>Whenever we have a non-mangeled (has <code>#[no_mangle]</code> attribute), public, exported C function in our <code>lib.rs</code> or declared as a module there, the fuction signature is going to be added to <code>glue/ios/include/exa_native.h</code> on save.</p><p>Create <code>glue/ios/include/module.modulemap</code> and add the proper info to export the headers</p><pre><code class=language-modulemap>module Exa {
+    header &quot;exa_native.h&quot;
+    export *
+}
+</code></pre><h3 id=errors>Errors</h3><p>Create <code>glue/ios/src/error.rs</code> that will contain our errors enum to be handled later on.</p><pre><code class=language-rust>#[derive(Debug)]
+pub enum Error {
+    InvalidUtf8,
+    InvalidUint,
+}
+
+</code></pre><h3 id=prelude>Prelude</h3><p>Prelude is going to be imported in most of the files, so we want to make it as minimal as possibile.</p><p>Inside of it we&rsquo;re going to make a shortcut for the <code>Result</code> type.</p><pre><code class=language-rust>pub use crate::error::Error;
+
+pub type Result&lt;T&gt; = core::result::Result&lt;T, Error&gt;;
+</code></pre><p>Now we can add both of them to <code>glue/ios/src/lib.rs</code></p><pre><code class=language-rust>mod error;
+mod prelude;
+</code></pre><p>This pattern is considered an idiomatic way in rust for handling errors.</p><h3 id=ffi-helpers>FFI Helpers</h3><p>FFI stands for foriegn function interface, we will add helpers for converting to and from C types</p><p>Create <code>glue/ios/src/ffi_helpers.rs</code></p><pre><code class=language-rust>use crate::prelude::*;
+use libc::c_char;
+use std::ffi::{CStr, CString};
+
+pub unsafe fn to_rust_str&lt;'a&gt;(raw_ptr: *const c_char) -&gt; Result&lt;&amp;'a str&gt; {
+    match CStr::from_ptr(raw_ptr).to_str() {
+        Ok(res) =&gt; Ok(res),
+        Err(_) =&gt; Err(Error::InvalidUtf8),
+    }
+}
+
+pub fn to_c_str(s: &amp;str) -&gt; Result&lt;*mut i8&gt; {
+    match CString::new(s) {
+        Ok(string) =&gt; Ok(string.into_raw()),
+        Err(_) =&gt; Err(Error::InvalidUint),
+    }
+}
+</code></pre><p>And finally import <code>ffi_helpers.rs</code> inside <code>lib.rs</code></p><pre><code class=language-rust>mod error;
+mod prelude;
+mod ffi_helpers;
+</code></pre><h3 id=glue>Glue</h3><p>For the gluing part, we want to import <code>libc</code> and <code>exa_core</code> and with the help of <code>ffi_helpers</code> we can convert back and forth between C and Rust types.</p><pre><code class=language-rust>mod error;
+mod ffi_helpers;
+mod prelude;
+
+use exa_core::greet;
+use libc::c_char;
+
+#[no_mangle]
+pub unsafe extern &quot;C&quot; fn greet_person(name: *const c_char) -&gt; *mut c_char {
+    let Ok(name) = ffi_helpers::to_rust_str(name) else {
+        panic!(&quot;Failed to convert to rust string slice&quot;);
+    };
+    let name = greet(name);
+    let Ok(name) = ffi_helpers::to_c_str(&amp;name) else {
+        panic!(&quot;Failed to convert to char array&quot;);
+    };
+
+    name
+}
+</code></pre><p>The <code>#[no_mangle]</code> is an important part, so on build the function name is still the same.</p><p>Now if you save, you should be able to see the <code>exa_native.h</code> has added a function.</p><pre><code class=language-c>#include &lt;stdarg.h&gt;
+#include &lt;stdbool.h&gt;
+#include &lt;stdint.h&gt;
+#include &lt;stdlib.h&gt;
+
+char *greet_person(const char *name);
+</code></pre><h2 id=building-the-project>Building the Project</h2><p>Add these commands to the <code>Makefile</code></p><pre><code class=language-make>ios_targets = aarch64-apple-ios x86_64-apple-ios aarch64-apple-ios-sim
+android_targets = armv7-linux-androideabi i686-linux-android aarch64-linux-android x86_64-linux-android
+lib_name = exa
+framework_name = Exa
+
+android-setup:
+	@for target in ${android_targets} ; do \
+		rustup target add $$target ; \
+	done
+
+ios-setup:
+	cargo install cargo-lipo
+
+	@for target in ${ios_targets} ; do \
+		rustup target add $$target ; \
+	done
+
+ios: ios-clean ios-build ios-framework
+
+ios-build:
+	@echo &quot;Building for iOS...&quot;
+
+	@for target in ${ios_targets} ; do \
+		cargo build -p ios --release --target $$target ; \
+	done
+
+	@lipo -create \
+		target/x86_64-apple-ios/release/lib${lib_name}.a \
+		target/aarch64-apple-ios-sim/release/lib${lib_name}.a \
+		-output target/lib${lib_name}_sim.a
+
+ios-framework:
+	@xcodebuild -create-xcframework \
+		-library target/lib${lib_name}_sim.a \
+		-headers glue/ios/include/ \
+		-library target/aarch64-apple-ios/release/lib${lib_name}.a \
+		-headers glue/ios/include/ \
+		-output target/${framework_name}.xcframework
+
+ios-clean:
+	@cd target &amp;&amp; rm -rf ${framework_name}.xcframework
+</code></pre><p><em><strong>Note:</strong> Please make sure to use tabs rather than spaces, if we use spaces Makefile will throw this error: <code>*** missing separator. Stop.</code></em></p><p>And now run <code>make ios</code></p><p><code>ios-build</code> is going to loop over the ios targets that we specified, and build the project targeting them. Then using <code>lipo</code> we&rsquo;re going to create <code>.a</code> files</p><p>And finally we want to bundle the <code>.a</code> files inside an <code>xcframework</code> so we can use it in our ios app.</p><h2 id=using-the-library>Using the Library</h2><h3 id=adding-xcframework>Adding XCFramework</h3><p>Navigate to <code>Frameworks, Libraries, and Embedded Content</code></p><p><img src=https://static.ghamza.dev/images/rust-for-mobile-part-2/navigate_to_framework.png alt=1></p><p>Choose <code>Add Other...</code> > <code>Add Files...</code></p><p><img src=https://static.ghamza.dev/images/rust-for-mobile-part-2/add_other_framework.png alt=2></p><p>Navigate to <code>Exa.xcframework</code> (under <code>target/</code>) and Click open</p><p><img src=https://static.ghamza.dev/images/rust-for-mobile-part-2/choose_framework.png alt=3></p><h3 id=using-xcframework>Using XCFramework</h3><p>We&rsquo;re going to import <code>Exa</code> and use <code>greet_person</code>, simple enough.</p><pre><code class=language-swift>import SwiftUI
+import Exa
+
+struct ContentView: View {
+    var body: some View {
+        VStack {
+            Button(action: {
+                Exa.greet_person(&quot;Ghamza&quot;).map {
+                    print(String(cString: $0))
+                }
+            }) {
+                Text(&quot;Greet&quot;)
+            }
+        }
+        .padding()
+    }
+}
+
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView()
+    }
+}
+</code></pre><p>After using <code>Exa.greet_person</code> we&rsquo;re going to receive a C char pointer, so instead of unsafly unwrapping we use <code>.map</code>, if we have a valid result than we can unwrap it and print it on the console.</p><p>Finally, after pressing <code>Greet</code> you should be able to see the log message in xcode&rsquo;s output console.</p><hr><p>And you&rsquo;ve reached the end of the second part 🦀.</p><p>In the next part, we will continue on gluing rust code but this time with android, create an android module, and a sample app.</p><p>You can find the code for this article on GitHub <a href=https://github.com/Ghamza-Jd/exa-lib/tree/part-2-ios-glue>Ghamza-Jd/exa-lib</a></p></section><div class=post-tags><nav class="nav tags"><ul class=tags><li><a href=/tags/rust>Rust</a></li><li><a href=/tags/rust-for-mobile>Rust for Mobile</a></li></ul></nav></div></article><script src=https://giscus.app/client.js data-repo=ghamza-blog/ghamza-blog.github.io data-repo-id=R_kgDOHMIi9w data-category-id=DIC_kwDOHMIi984COoB4 data-mapping=url data-reactions-enabled=1 data-emit-metadata=1 data-input-position=top data-theme=preferred_color_scheme data-lang=en data-loading=lazy crossorigin=anonymous async></script></main><footer><div style=display:flex><a href=https://github.com/Ghamza-Jd title=GitHub><i data-feather=github></i></a>
 |<a href=https://www.facebook.com/ghamza.tech title=Facebook><i data-feather=facebook></i></a>
 |<a href=https://www.linkedin.com/in/hamza-jadid title=LinkedIn><i data-feather=linkedin></i></a>
 |<a href=https://blog.ghamza.dev/index.xml title=rss><i data-feather=rss></i></a>
