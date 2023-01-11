@@ -100,16 +100,16 @@ android_targets = armv7-linux-androideabi i686-linux-android aarch64-linux-andro
 lib_name = exa
 
 android-setup:
-    @for target in ${android_targets} ; do \
-        rustup target add $$target ; \
-    done
+	@for target in ${android_targets} ; do \
+		rustup target add $$target ; \
+	done
 
 ios-setup:
-    cargo install cargo-lipo
+	cargo install cargo-lipo
 
-    @for target in ${ios_targets} ; do \
-        rustup target add $$target ; \
-    done
+	@for target in ${ios_targets} ; do \
+		rustup target add $$target ; \
+	done
 ```
 
 _**Note:** Please make sure to use tabs rather than spaces, if we use spaces Makefile will throw this error: `Makefile:6: *** missing separator.  Stop.`_
