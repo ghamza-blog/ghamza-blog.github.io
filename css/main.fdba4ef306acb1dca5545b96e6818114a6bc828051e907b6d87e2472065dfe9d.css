@@ -17,6 +17,7 @@ html {
 body {
   display: block;
   margin: 8px;
+  font-family: 'Fira Code', sans-serif;
 }
 
 * {
@@ -29,13 +30,12 @@ body {
 }
 
 p {
-  font-family: 'Fira Sans', sans-serif;
   line-height: 1.5;
 }
 
 hr {
   border: 0;
-  border-top: 3px dotted var(--bordercl);
+  border-top: 3px dashed var(--bordercl);
   margin: 1em 0;
 }
 
@@ -115,7 +115,7 @@ code {
 }
 
 pre {
-  background-color: #ececec;
+  background-color: var(--bordercl) !important;
   line-height: 1.4;
   overflow-x: auto;
   padding: 1em;
@@ -204,7 +204,7 @@ h6::before {
 footer {
   display: flex;
   align-items: center;
-  border-top: 0.4rem dotted var(--bordercl);
+  border-top: 0.4rem dashed var(--bordercl);
   padding: 2rem 0rem;
   margin-top: 2rem;
 }
@@ -371,7 +371,7 @@ svg {
 .highlight pre code[class*='language-toml']::before {
   content: 'TOML';
   background: rosybrown;
-  color: brown;
+  color: black;
 }
 
 .highlight pre code[class*='language-rust']::before,
