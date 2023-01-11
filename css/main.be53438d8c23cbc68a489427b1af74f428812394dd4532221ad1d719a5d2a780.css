@@ -302,9 +302,8 @@ svg {
 }
 
 .highlight pre code[class*='language-']::before {
-  background: black;
   border-radius: 0 0 0.25rem 0.25rem;
-  color: white;
+  background-color: #f1f1f1;
   font-size: 12px;
   letter-spacing: 0.025rem;
   padding: 0.1rem 0.5rem;
