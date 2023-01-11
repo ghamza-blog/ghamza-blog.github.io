@@ -3,13 +3,10 @@ language = "en-us"
 title = "Ghamza Blog"
 theme = "baseet"
 copyright = "© Hamza Jadid"
-pygmentsstyle = "monokai"
-pygmentscodefences = true
-pygmentscodefencesguesssyntax = true
 paginate = 10
 
 [params]
-mode = "auto"
+mode = "dark"
 useCDN = true
 subtitle = "Personal blog to share computer science and software engineering articles."
 support_text = "🕊️🇵🇸 I stand with humanity, I stand with Palestine 🇵🇸🕊️"
@@ -64,3 +61,19 @@ weight = 1
 name = "Tags"
 url = "/tags"
 weight = 2
+
+[markup]
+[markup.highlight]
+anchorLineNos = false
+codeFences = true
+guessSyntax = true
+hl_Lines = ''
+hl_inline = false
+lineAnchors = ''
+lineNoStart = 1
+lineNos = true
+lineNumbersInTable = false
+noClasses = true
+noHl = false
+style = "dracula"
+tabWidth = 4
