@@ -37,11 +37,11 @@ crate-type = ["staticlib"]
 
 ## Dependencies
 
-We want the `exa_core` and `libc`. `exa_core` is going to be our core library and we want to glue it with iOS, and `libc` which provides all of the definitions necessary to easily interoperate with C code (or "C-like" code) on each of the platforms that Rust supports.
+- `exa_core`; our core library
+- `libc`; provides all of the definitions necessary to easily interoperate with C code (or "C-like" code) on each of the platforms that Rust supports
+- `cbindgen` as build dependency; to generate our library header file.
 
 We want to export our library as C interfaces so that we can use C types and C functions directly from Swift. [C interoperability with Swift](https://developer.apple.com/documentation/swift/c-interoperability).
-
-And finally we want `cbindgen` to generate C bindings as a build dependency.
 
 Run
 
@@ -85,7 +85,7 @@ fn setup_cbindgen() {
 }
 ```
 
-Now whenever we added an exported C function its signature will be added to `glue/ios/include/exa_native.h` on save.
+Whenever we have a non-mangeled (has `#[no_mangle]` attribute), public, exported C function in our `lib.rs` or declared as a module there, the fuction signature is going to be added to `glue/ios/include/exa_native.h` on save.
 
 Create `glue/ios/include/module.modulemap` and add the proper info to export the headers
 
@@ -128,6 +128,8 @@ mod error;
 mod prelude;
 ```
 
+This pattern is considered an idiomatic way in rust for handling errors.
+
 ### FFI Helpers
 
 FFI stands for foriegn function interface, we will add helpers for converting to and from C types
@@ -164,7 +166,7 @@ mod ffi_helpers;
 
 ### Glue
 
-For the gluing part, we want to import `libc` and `exa_core` and with the help of `ffi_helpers` we can convert back and forth from rust types to c types and then use `greet`'s result and return it.
+For the gluing part, we want to import `libc` and `exa_core` and with the help of `ffi_helpers` we can convert back and forth between C and Rust types.
 
 ```rust {hl_lines=["5-19"],linenostart=1}
 mod error;
@@ -188,7 +190,7 @@ pub unsafe extern "C" fn greet_person(name: *const c_char) -> *mut c_char {
 }
 ```
 
-The `#[no_mangle]` is an important part, so on build the function name is still the same, it we don't wanted it to be mangled.
+The `#[no_mangle]` is an important part, so on build the function name is still the same.
 
 Now if you save, you should be able to see the `exa_native.h` has added a function.
 
@@ -303,10 +305,19 @@ struct ContentView_Previews: PreviewProvider {
 }
 ```
 
-After using `Exa.greet_person` we're going to receive a C char pointer, so instead of unsafly unwrapping it we can us `.map`, if we have a valid result than we can unwrap it and print it on the console.
+After using `Exa.greet_person` we're going to receive a C char pointer, so instead of unsafly unwrapping we use `.map`, if we have a valid result than we can unwrap it and print it on the console.
 
 Finally, after pressing `Greet` you should be able to see the log message in xcode's output console.
+
+---
+
+And you've reached the end of the second part 🦀.
+
+In the next part, we will continue on gluing rust code but this time with android, create an android module, and a sample app.
+
+You can find the code for this article on GitHub [Ghamza-Jd/exa-lib][4]
 
 [1]: https://static.ghamza.dev/images/rust-for-mobile-part-2/navigate_to_framework.png
 [2]: https://static.ghamza.dev/images/rust-for-mobile-part-2/add_other_framework.png
 [3]: https://static.ghamza.dev/images/rust-for-mobile-part-2/choose_framework.png
+[4]: https://github.com/Ghamza-Jd/exa-lib/tree/part-2-ios-glue
