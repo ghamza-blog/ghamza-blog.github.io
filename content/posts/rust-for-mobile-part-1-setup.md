@@ -1,7 +1,7 @@
 ---
 title: "Rust for Mobile Development Part 1: Setup"
 date: 2023-01-11T04:20:15+02:00
-draft: false
+draft: true
 tags: ["Rust", "Rust for Mobile"]
 description: "Rust for Mobile Development Part 1: Setup"
 ---
