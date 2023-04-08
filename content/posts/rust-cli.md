@@ -1,6 +1,6 @@
 ---
 title: "Building a CLI tool in Rust"
-date: 2023-04-08T04:20:15+02:00
+date: 2023-04-07T04:20:15+02:00
 draft: false
 tags: ["Rust"]
 description: "Build a CLI tool in Rust"
