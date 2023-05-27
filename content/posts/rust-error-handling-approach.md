@@ -1,6 +1,6 @@
 ---
 title: "How Rust Approached Error Handling"
-date: 2023-05-21T01:00:00+03:00
+date: 2023-05-27T01:00:00+03:00
 draft: false
 tags: ["Easy CS"]
 description: "Rust's approach to error handling vs. exceptions in other languages"
