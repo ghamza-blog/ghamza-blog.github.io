@@ -4,13 +4,13 @@ body {
 }
 
 ::-moz-selection {
-  background: blue;
+  background: #007A3D;
   color: #fff;
   text-shadow: none;
 }
 
 ::selection {
-  background: #007A3D;
+  background: #007A3D;;
   color: #fff;
   text-shadow: none;
 }
@@ -18,25 +18,21 @@ body {
 hr {
   border-top: 4px dashed var(--bordercl);
 }
-
 code {
   background-color: var(--bordercl);
   color: white;
   text-decoration: bold;
   padding: 0.1em 0.2em;
   border-radius: 2%;
-  font-family: 'Fira Code';
 }
-
 pre {
   background-color: var(--bordercl) !important;
   line-height: 1.4;
   overflow-x: auto;
   padding: 1em;
 }
-
 blockquote {
-  border-color: blue;
+  border-color: #007A3D;
 }
 
 h1,
@@ -47,32 +43,26 @@ h5,
 h6 {
   color: #ddd;
 }
-
 h1::before {
   color: var(--darkMaincolor);
   content: "# ";
 }
-
 h2::before {
   color: var(--darkMaincolor);
   content: "## ";
 }
-
 h3::before {
   color: var(--darkMaincolor);
   content: "### ";
 }
-
 h4::before {
   color: var(--darkMaincolor);
   content: "#### ";
 }
-
 h5::before {
   color: var(--darkMaincolor);
   content: "##### ";
 }
-
 h6::before {
   color: var(--darkMaincolor);
   content: "###### ";
@@ -115,16 +105,13 @@ a:hover {
 .highlight {
   background-color: #333;
 }
-
 .soc:hover {
   color: black;
 }
-
 .draft-label {
   color: var(--darkMaincolor);
-  background-color: var(--bordercl);
+  background-color: var(--bordercl);;
 }
-
 .highlight pre code[class*='language-']::before {
   color: white;
   border-radius: 0 0 0.25rem 0.25rem;
@@ -137,21 +124,18 @@ a:hover {
   text-transform: uppercase;
   top: 0;
 }
-
 .highlight pre code[class=language-javaScript]::before,
 .highlight pre code[class="language-js"]::before {
   content: "js";
   background: #f7df1e;
   color: black;
 }
-
 .highlight pre code[class*='language-yml']::before,
 .highlight pre code[class*='language-yaml']::before {
   content: 'yaml';
   background: #f71e6a;
   color: white;
 }
-
 .highlight pre code[class*='language-shell']::before,
 .highlight pre code[class*='language-bash']::before,
 .highlight pre code[class*='language-sh']::before {
@@ -159,39 +143,33 @@ a:hover {
   background: green;
   color:white
 }
-
 .highlight pre code[class*='language-json']::before{
   content: 'json';
   background: dodgerblue;
-  color: #000000 
+   color: #000000
 }
-
 .highlight pre code[class*='language-python']::before,
 .highlight pre code[class*='language-py']::before {
   content: 'py';
   background: blue;
   color: yellow ;
 }
-
 .highlight pre code[class*='language-css']::before{
   content: 'css';
   background: cyan;
   color: black ;
 }
-
 .highlight pre code[class*='language-go']::before{
   content: 'Go';
   background: cyan;
   color: royalblue ;
 }
-
 .highlight pre code[class*='language-md']::before,
 .highlight pre code[class*='language-md']::before{
   content: 'Markdown';
   background: royalblue;
   color: whitesmoke ;
 }
-
 .highlight pre code[class*='language-toml']::before {
   content: 'TOML';
   background: rosybrown;
