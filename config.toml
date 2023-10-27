@@ -9,7 +9,7 @@ paginate = 10
 mode = "dark"
 useCDN = true
 subtitle = "Personal blog to share computer science and software engineering articles."
-support_text = "🕊️🇵🇸 I stand with humanity, I stand with Palestine 🇵🇸🕊️"
+support_text = "🕊️🇵🇸 <river>Palestine</sea> 🇵🇸🕊️"
 gtag_key = "G-M9GYS9Z1XC"
 
 [params.giscus]
